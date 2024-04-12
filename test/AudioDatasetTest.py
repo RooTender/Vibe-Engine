@@ -7,8 +7,8 @@ from src.AudioDataset import AudioDataset
 def mock_os_walk():
     with patch("os.walk") as mockwalk:
         mockwalk.return_value = [
-            ('/fake/dir/emotion1', ('subdirs',), ('audio1.wav', 'audio2.wav')),
-            ('/fake/dir/emotion2', ('subdirs',), ('audio3.wav',))
+            ("/fake/dir/emotion1", ("subdirs",), ("audio1.wav", "audio2.wav")),
+            ("/fake/dir/emotion2", ("subdirs",), ("audio3.wav",)),
         ]
         yield mockwalk
 
