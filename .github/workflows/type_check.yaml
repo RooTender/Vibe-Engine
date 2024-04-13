@@ -18,4 +18,4 @@ jobs:
       - name: Install mypy
         run: pip install mypy
       - name: Type check
-        run: mypy src --config-file mypy.ini
+        run: mypy src --config-file mypy.ini -v
