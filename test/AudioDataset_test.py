@@ -2,13 +2,14 @@ import pytest
 from unittest.mock import patch, MagicMock
 from src.AudioDataset import AudioDataset
 
+FAKE_ROOT_DIR = "/fake/dir"
 
 @pytest.fixture
 def mock_os_walk():
     with patch("os.walk") as mockwalk:
         mockwalk.return_value = [
-            ("/fake/dir/emotion1", ("subdirs",), ("audio1.wav", "audio2.wav")),
-            ("/fake/dir/emotion2", ("subdirs",), ("audio3.wav",)),
+            (f"{FAKE_ROOT_DIR}/emotion1", ("subdirs",), ("audio1.wav", "audio2.wav")),
+            (f"{FAKE_ROOT_DIR}/emotion2", ("subdirs",), ("audio3.wav",)),
         ]
         yield mockwalk
 
@@ -23,13 +24,13 @@ def mock_torchaudio_load():
 
 
 def test_dataset_initialization(mock_os_walk, mock_torchaudio_load):
-    dataset = AudioDataset("/fake/dir")
+    dataset = AudioDataset(FAKE_ROOT_DIR)
 
     assert len(dataset.samples) == 3
 
 
 def test_getitem_returns_correct_structure(mock_os_walk, mock_torchaudio_load):
-    dataset = AudioDataset("/fake/dir")
+    dataset = AudioDataset(FAKE_ROOT_DIR)
     sample = dataset[0]
 
     assert "waveform" in sample and "label" in sample
@@ -39,7 +40,7 @@ def test_getitem_returns_correct_structure(mock_os_walk, mock_torchaudio_load):
 def test_getitem_applies_features(mock_os_walk, mock_torchaudio_load):
     feature = MagicMock(return_value="feature_result")
     features = [("feature1", feature)]
-    dataset = AudioDataset("/fake/dir", features=features)
+    dataset = AudioDataset(FAKE_ROOT_DIR, features=features)
     sample = dataset[0]
 
     feature.assert_called_once_with(sample["waveform"])
@@ -52,7 +53,7 @@ def test_getitem_with_multiple_features(mock_os_walk, mock_torchaudio_load):
     feature = MagicMock(return_value="feature_result")
     feature2 = MagicMock(return_value="feature2_result")
     features = [("feature1", feature), ("feature2", feature2)]
-    dataset = AudioDataset("/fake/dir", features=features)
+    dataset = AudioDataset(FAKE_ROOT_DIR, features=features)
     sample = dataset[0]
 
     feature.assert_called_once_with(sample["waveform"])
@@ -65,7 +66,7 @@ def test_getitem_with_multiple_features(mock_os_walk, mock_torchaudio_load):
 
 def test_getitem_handles_file_load_failure(mock_os_walk, mock_torchaudio_load):
     mock_torchaudio_load.side_effect = Exception("Failed to load")
-    dataset = AudioDataset("/fake/dir")
+    dataset = AudioDataset(FAKE_ROOT_DIR)
 
     with pytest.raises(Exception):
         dataset[0]
