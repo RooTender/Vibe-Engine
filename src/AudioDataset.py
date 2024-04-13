@@ -1,10 +1,11 @@
 import os
+import torch
 import torchaudio
 from torch.utils.data import Dataset
 from typing import Dict, Any, List, Callable, Tuple
 
 
-class AudioDataset(Dataset[Any]):
+class AudioDataset(Dataset[Tuple[torch.Tensor, str]]):
     def __init__(
         self, dir: str, features: List[Tuple[str, Callable[[Any], Any]]] | None = None
     ) -> None:
