@@ -24,18 +24,48 @@ def mock_torchaudio_load():
 
 def test_dataset_initialization(mock_os_walk, mock_torchaudio_load):
     dataset = AudioDataset("/fake/dir")
+
     assert len(dataset.samples) == 3
 
 
 def test_getitem_returns_correct_structure(mock_os_walk, mock_torchaudio_load):
     dataset = AudioDataset("/fake/dir")
     sample = dataset[0]
+
     assert "waveform" in sample and "label" in sample
     assert sample["label"] == "emotion1"
+
+
+def test_getitem_applies_features(mock_os_walk, mock_torchaudio_load):
+    feature = MagicMock(return_value="feature_result")
+    features = [("feature1", feature)]
+    dataset = AudioDataset("/fake/dir", features=features)
+    sample = dataset[0]
+
+    feature.assert_called_once_with(sample["waveform"])
+
+    assert "feature1" in sample
+    assert sample["feature1"] == "feature_result"
+
+
+def test_getitem_with_multiple_features(mock_os_walk, mock_torchaudio_load):
+    feature = MagicMock(return_value="feature_result")
+    feature2 = MagicMock(return_value="feature2_result")
+    features = [("feature1", feature), ("feature2", feature2)]
+    dataset = AudioDataset("/fake/dir", features=features)
+    sample = dataset[0]
+
+    feature.assert_called_once_with(sample["waveform"])
+    feature2.assert_called_once_with(sample["waveform"])
+
+    assert "feature1" in sample and "feature2" in sample
+    assert sample["feature1"] == "feature_result"
+    assert sample["feature2"] == "feature2_result"
 
 
 def test_getitem_handles_file_load_failure(mock_os_walk, mock_torchaudio_load):
     mock_torchaudio_load.side_effect = Exception("Failed to load")
     dataset = AudioDataset("/fake/dir")
+
     with pytest.raises(Exception):
         dataset[0]
