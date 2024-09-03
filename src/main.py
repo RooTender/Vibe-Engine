@@ -1,6 +1,6 @@
 import convert_baum as baum
-from audio_dataset import AudioDataset
+import audio_dataset
 
-baum.convert_videos_to_audio("../data/Annotations_BAUM1a.csv")
+#baum.convert_videos_to_audio("../data/Annotations_BAUM1a.csv")
 
-dataset = AudioDataset('../data/output')
+audio_dataset.preprocess_and_save('output', 'preprocessed')
