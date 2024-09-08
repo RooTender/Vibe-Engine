@@ -14,11 +14,8 @@ audio_dataset = AudioDataset(dir='../data/output', features_extractor=features_e
 data_loader = DataLoader(audio_dataset, batch_size=1)
 
 for batch in data_loader:
-	features_type = batch['features']
 	labels_batch = batch['label']
+	features = batch['features']
 
-	for feature_type, feature_values in features_type.items():
-		print(feature_type)
-		print(feature_values)
-
-		exit()
+	for feature_name, feature_data in features.items():
+		pass

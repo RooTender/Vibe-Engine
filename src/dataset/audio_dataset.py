@@ -20,6 +20,9 @@ class AudioDataset(DatasetFolder):
 		label = str.lower(path.split('/')[-2])
 		waveform, sample_rate = self.loader(path)
 
-		frames = self.feature_extractor.stream_audio(waveform, sample_rate)
+		features_info = self.feature_extractor.stream_audio(waveform, sample_rate)
 
-		return {'features': frames, 'label': label}
+		return {
+			'label': label, 
+			'features': features_info
+		}
