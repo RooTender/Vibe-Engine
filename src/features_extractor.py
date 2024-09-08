@@ -6,9 +6,7 @@ class FeaturesExtractor():
 		self.hop_length_ms = hop_length_ms
 		self.features = features
 
-	def stream_audio(self, file_path):
-		waveform, sample_rate = torch.load(file_path)
-
+	def stream_audio(self, waveform, sample_rate):
 		frame_size = int(self.frame_size_ms * sample_rate / 1000)
 		hop_length = int(self.hop_length_ms * sample_rate / 1000)
 

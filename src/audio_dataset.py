@@ -1,31 +1,24 @@
-import os
-from torch.utils.data import Dataset
-from typing import Dict, Any
-
+import torchaudio
+from torchvision.datasets import DatasetFolder
 from features_extractor import FeaturesExtractor
 
-
-class AudioDataset(Dataset[Any]):
-    def __init__(self, dir: str, features_extractor: FeaturesExtractor) -> None:
-        self.samples = []
+class AudioDataset(DatasetFolder):
+    def __init__(self, dir: str, features_extractor: FeaturesExtractor):
+        super().__init__(
+            root=dir, 
+            loader=self.audio_loader, 
+            extensions=('.wav', '.mp3', '.flac', '.ogg', '.m4a')
+        )
         self.feature_extractor = features_extractor
 
-        for root_path, _, file_names in os.walk(dir):
-            for file_name in file_names:
-                full_path = os.path.join(root_path, file_name)
+    def audio_loader(self, path: str):
+        waveform, sample_rate = torchaudio.load(path)
+        return waveform, sample_rate
 
-                if self.is_audio_file(full_path):
-                    self.samples.append(full_path)
-    
-    def is_audio_file(self, file_name: str) -> bool:
-        """Check if the file is an audio file based on its extension."""
+    def __getitem__(self, index: int):
+        path, target = self.samples[index]
+        waveform, sample_rate = self.loader(path)
 
-        _, ext = os.path.splitext(file_name)
-        return ext.lower() in {'.wav', '.mp3', '.flac', '.ogg', '.m4a'}
+        frames = list(self.feature_extractor.stream_audio_from_waveform(waveform, sample_rate))
 
-    def __len__(self) -> int:
-        return len(self.samples)
-
-    def __getitem__(self, index: int) -> Dict[str, Any]:
-        frames = list(self.feature_extractor.stream_audio(self.samples[index]))
-        return { 'features': frames }
+        return {'features': frames, 'label': target}
