@@ -12,13 +12,25 @@ class FeaturesExtractor():
 
 		waveform = waveform / torch.max(torch.abs(waveform))
 
+		waveform_features = {}
+		for name in self.features.keys():
+			waveform_features[name] = []
+
 		for i in range(0, waveform.size(1), hop_length):
 			frame = waveform[:, i:i+frame_size]
 
 			if frame.size(1) < frame_size:
 				break
 
-			yield self.extract_features(frame)
+			features = self.extract_features(frame)
+
+			for name, feature_value in features.items():
+				waveform_features[name].append(feature_value)
+		
+		for name in waveform_features:
+			waveform_features[name] = torch.stack(waveform_features[name])
+
+		return waveform_features
 
 	def extract_features(self, frame: any):
 		result = {}
