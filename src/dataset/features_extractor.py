@@ -21,9 +21,9 @@ class FeaturesExtractor():
 			yield self.extract_features(frame)
 
 	def extract_features(self, frame: any):
-		result = dict[str, any]
+		result = {}
 
-		for feature in self.features.items():
-			result[feature[0]] = feature[1](frame)
-		
+		for name, feature_fn in self.features.items():
+			result[name] = feature_fn(frame)
+
 		return result
