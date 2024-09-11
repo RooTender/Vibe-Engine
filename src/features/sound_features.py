@@ -1,3 +1,4 @@
+import torch
 import torchaudio
 import fcwt
 from .superlet import superlets
@@ -10,21 +11,52 @@ def stft_spectrogram_9(frame, _):
 	return torchaudio.transforms.Spectrogram(power=9)(frame)
 
 def cwt_spectrogram(frame, sample_rate):
-	_, output = fcwt.cwt(
-		input=frame.numpy(), 
-		fs=sample_rate, f0=1, f1=sample_rate // 2, fn=400, 
-		nthreads=8)
-	return output
+
+	if len(frame.shape) == 1:
+		_, output = fcwt.cwt(
+			input=frame.numpy(), 
+			fs=sample_rate, f0=1, f1=sample_rate // 2, fn=400, 
+			nthreads=8
+		)
+
+		return output
+
+	num_channels = frame.shape[0]
+	results = []
+
+	for channel in range(num_channels):
+		channel_data = frame[channel, :].numpy()
+
+		_, output = fcwt.cwt(
+			input=channel_data,
+			fs=sample_rate,
+			f0=1,
+			f1=sample_rate // 2,
+			fn=400,
+			nthreads=8
+		)
+
+		results.append(np.abs(output))
+
+	return torch.tensor(np.stack(results, axis=0))
 
 def slt_spectrogram(frame, sample_rate):
-	return superlets(data=frame,
+	result = superlets(data=frame,
 				  fs=sample_rate,
-				  foi=np.linspace(1, sample_rate // 2, 100),
-				  c1=2, ord=(5, 10))
+				  foi=np.linspace(1, sample_rate // 2, 50),
+				  c1=2, ord=(3, 5))
+	
+	return torch.tensor(np.abs(np.stack(result, axis=0)))
+
 
 def mfcc(frame, sample_rate):
 	return torchaudio.transforms.MFCC(
 		sample_rate=sample_rate,
-		n_mfcc=13,
-		melkwargs={"n_mels": 64}
+		n_mfcc=13,  # Typically 13 MFCCs are used
+		melkwargs={
+			"n_mels": 40,         # Keep 40 mel bands
+			"n_fft": 640,         # FFT size large enough for 40ms window (640 samples)
+			"hop_length": 640,    # 40ms hop length (640 samples)
+			"win_length": 640     # 40ms window length (640 samples)
+		}
 	)(frame)
