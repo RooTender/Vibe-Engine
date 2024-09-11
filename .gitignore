@@ -165,3 +165,4 @@ data/input/*
 data/output/*
 !data/output/.gitkeep
 data/preprocessed
+artefacts/
