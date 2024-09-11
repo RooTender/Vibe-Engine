@@ -31,10 +31,9 @@ class AudioDataset(DatasetFolder):
 
 	def __getitem__(self, index: int):
 		path, _ = self.samples[index]
-		waveform, sample_rate = self.loader(path)
-
+		
 		label = str.lower(path.split('/')[-2])
-		features_info = self.feature_extractor.stream_audio(waveform, sample_rate)
+		features_info = self.feature_extractor.stream_audio(path, self.audio_loader)
 		pad_values = self.map_emotion_to_pad(label)
 
 		return {
