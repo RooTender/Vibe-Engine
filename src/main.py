@@ -6,35 +6,36 @@ from features.sound_features import *
 # import test_tools.test_features
 
 features = {
-	#'dominant_freq': dominant_freq,
-	#'fundamental_freq': fundamental_freq,
+	'dominant_freq': dominant_freq,
+	'fundamental_freq': fundamental_freq,
 
-	#'stft': stft_spectrogram,
-	#'stft9': stft_spectrogram_9,
-	#'fcwt': cwt_spectrogram,
-	#'slt': slt_spectrogram,
+	'stft': stft_spectrogram,
+	'stft9': stft_spectrogram_9,
+	'fcwt': cwt_spectrogram,
+	'slt': slt_spectrogram,
 
-	#'mel_energy': mel_energy
-	#'bark_energy': bark_energy,
-	#'cqt_energy': cqt_energy,
-	#'erb_energy': erb_energy,
-	#'gammatone_energy': gammatone_energy,
+	'mel_energy': mel_energy,
+	'bark_energy': bark_energy,
+	'cqt_energy': cqt_energy,
+	'erb_energy': erb_energy,
+	'gammatone_energy': gammatone_energy,
 
-	#'lpc': lpc_features,
+	'lpc': lpc_features,
 
-	#'mfcc': mfcc,
-	#'bfcc': bfcc,
-	#'gfcc': gfcc,
+	'mfcc': mfcc,
+	'bfcc': bfcc,
+	'gfcc': gfcc,
 
-	#'rms': rms,
-	#'zcr': zcr,
-	#'teo': teo,
+	'rms': rms,
+	'zcr': zcr,
+	'teo': teo,
 
-	#'psd': psd,
-	#'asd': asd,
-	#'spectral_entropy': spectral_entropy,
-	#'spectral_centroid': spectral_centroid,
-	#'spectral_flux': spectral_flux,
+	'psd': psd,
+	'asd': asd,
+	
+	'spectral_entropy': spectral_entropy,
+	'spectral_centroid': spectral_centroid,
+	'spectral_flux': spectral_flux,
 	'spectral_contrast': spectral_contrast,
 }
 

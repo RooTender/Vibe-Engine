@@ -93,8 +93,7 @@ def gammatone_energy(frame, sample_rate):
 def cqt_energy(frame, sample_rate):
 	frame = frame.numpy()
 
-	with SurpressWarnings:
-		cqt = np.abs(librosa.cqt(frame, sr=sample_rate, n_bins=24, hop_length=160))
+	cqt = np.abs(librosa.cqt(frame, sr=sample_rate, n_bins=24, hop_length=160))
 	
 	return torch.tensor(np.sum(cqt ** 2, axis=0))
 

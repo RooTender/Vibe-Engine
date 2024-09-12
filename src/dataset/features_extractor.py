@@ -22,11 +22,13 @@ class FeaturesExtractor():
 
 			for feature_name in self.features.keys():
 				feature_filename = os.path.join(self.precomputed_dir, f"{feature_name}_{filename}.pt")
-				
+
 				if os.path.exists(feature_filename):
+					# Load both 'vector' and 'size' from the saved file
+					data = torch.load(feature_filename)
 					cached_features[feature_name] = {
-						'vector': torch.load(feature_filename),
-						'size': torch.load(feature_filename).shape[1]
+						'vector': data['vector'],
+						'size': data['size']  # Load the 'size' key as well
 					}
 				else:
 					all_features_cached = False
@@ -36,7 +38,7 @@ class FeaturesExtractor():
 				return cached_features
 
 		waveform, sample_rate = loader(filepath)
-		
+
 		if waveform.shape[0] > 1:
 			waveform = torch.mean(waveform, dim=0)
 
@@ -49,13 +51,15 @@ class FeaturesExtractor():
 		num_frames = (waveform.size(0) - frame_size) // hop_length + 1
 
 		# Precompute the feature size using the first frame
-		first_frame = waveform[0:frame_size]
 		for name, feature_fn in self.features.items():
+			first_frame = waveform[0:frame_size]
 			feature_value = feature_fn(first_frame, sample_rate)
 			feature_size = feature_value.reshape(-1).shape[0]
+
+			# Initialize a 1D vector for each feature based on its individual size
 			features_info[name] = {
-				'vector': torch.empty((num_frames, feature_size)),
-				'size': feature_size
+				'vector': torch.empty(num_frames * feature_size),  # Allocate 1D vector
+				'size': feature_size  # Store feature size
 			}
 
 		# Compute features for each frame
@@ -67,13 +71,26 @@ class FeaturesExtractor():
 				break
 
 			for name, feature_fn in self.features.items():
-				feature_value = feature_fn(frame, sample_rate)
-				features_info[name]['vector'][i] = feature_value.reshape(-1)
+				# Pobierz rozmiar cechy dla bieżącej funkcji
+				feature_size = features_info[name]['size']
+				feature_value = feature_fn(frame, sample_rate).reshape(-1)
+
+				# Sprawdź, czy rozmiar cechy się zgadza
+				if feature_value.shape[0] != feature_size:
+					raise ValueError(f"Size mismatch for feature '{name}': expected {feature_size}, got {feature_value.shape[0]}")
+
+				# Insert the computed features into the right section of the vector
+				features_info[name]['vector'][i * feature_size:(i + 1) * feature_size] = feature_value
 
 		# Save computed features to disk if caching is enabled
 		if self.precomputed_dir:
 			for feature_name, feature_info in features_info.items():
 				feature_filename = os.path.join(self.precomputed_dir, f"{feature_name}_{filename}.pt")
-				torch.save(feature_info['vector'], feature_filename)
+
+				# Save both 'vector' and 'size' in the same file
+				torch.save({
+					'vector': feature_info['vector'],
+					'size': feature_info['size']
+				}, feature_filename)
 
 		return features_info
