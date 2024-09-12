@@ -35,18 +35,21 @@ class FeaturesExtractor():
 			if all_features_cached:
 				return cached_features
 
-		# Load the audio using the provided loader
 		waveform, sample_rate = loader(filepath)
+		
+		if waveform.shape[0] > 1:
+			waveform = torch.mean(waveform, dim=0)
+
 		frame_size = int(self.frame_size_ms * sample_rate / 1000)
 		hop_length = int(self.hop_length_ms * sample_rate / 1000)
 
 		waveform = waveform / torch.max(torch.abs(waveform))
 
 		features_info = {}
-		num_frames = (waveform.size(1) - frame_size) // hop_length + 1
+		num_frames = (waveform.size(0) - frame_size) // hop_length + 1
 
 		# Precompute the feature size using the first frame
-		first_frame = waveform[:, 0:frame_size]
+		first_frame = waveform[0:frame_size]
 		for name, feature_fn in self.features.items():
 			feature_value = feature_fn(first_frame, sample_rate)
 			feature_size = feature_value.reshape(-1).shape[0]
@@ -59,9 +62,9 @@ class FeaturesExtractor():
 		# Compute features for each frame
 		for i in range(num_frames):
 			start_idx = i * hop_length
-			frame = waveform[:, start_idx:start_idx + frame_size]
+			frame = waveform[start_idx:start_idx + frame_size]
 
-			if frame.size(1) < frame_size:
+			if frame.size(0) < frame_size:
 				break
 
 			for name, feature_fn in self.features.items():

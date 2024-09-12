@@ -11,34 +11,13 @@ def stft_spectrogram_9(frame, _):
 	return torchaudio.transforms.Spectrogram(power=9)(frame)
 
 def cwt_spectrogram(frame, sample_rate):
+	_, result = fcwt.cwt(
+		input=frame.numpy(), 
+		fs=sample_rate, f0=1, f1=sample_rate // 2, fn=50, 
+		nthreads=8
+	)
 
-	if len(frame.shape) == 1:
-		_, output = fcwt.cwt(
-			input=frame.numpy(), 
-			fs=sample_rate, f0=1, f1=sample_rate // 2, fn=400, 
-			nthreads=8
-		)
-
-		return output
-
-	num_channels = frame.shape[0]
-	results = []
-
-	for channel in range(num_channels):
-		channel_data = frame[channel, :].numpy()
-
-		_, output = fcwt.cwt(
-			input=channel_data,
-			fs=sample_rate,
-			f0=1,
-			f1=sample_rate // 2,
-			fn=400,
-			nthreads=8
-		)
-
-		results.append(np.abs(output))
-
-	return torch.tensor(np.stack(results, axis=0))
+	return torch.tensor(np.abs(np.stack(result, axis=0)))
 
 def slt_spectrogram(frame, sample_rate):
 	result = superlets(data=frame,
