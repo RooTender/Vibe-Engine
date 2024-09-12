@@ -25,7 +25,7 @@ class FeaturesExtractor():
 
 				if os.path.exists(feature_filename):
 					# Load both 'vector' and 'size' from the saved file
-					data = torch.load(feature_filename)
+					data = torch.load(feature_filename, weights_only=False)
 					cached_features[feature_name] = {
 						'vector': data['vector'],
 						'size': data['size']  # Load the 'size' key as well
