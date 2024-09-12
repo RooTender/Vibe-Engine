@@ -53,7 +53,6 @@ class FeaturesExtractor():
 		for name, feature_fn in self.features.items():
 			feature_value = feature_fn(first_frame, sample_rate)
 			feature_size = feature_value.reshape(-1).shape[0]
-
 			features_info[name] = {
 				'vector': torch.empty((num_frames, feature_size)),
 				'size': feature_size

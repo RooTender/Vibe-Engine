@@ -6,11 +6,36 @@ from features.sound_features import *
 # import test_tools.test_features
 
 features = {
-	'stft': stft_spectrogram,
-	'stft9': stft_spectrogram_9,
-	'fcwt': cwt_spectrogram,
-	'slt': slt_spectrogram,
+	#'dominant_freq': dominant_freq,
+	#'fundamental_freq': fundamental_freq,
+
+	#'stft': stft_spectrogram,
+	#'stft9': stft_spectrogram_9,
+	#'fcwt': cwt_spectrogram,
+	#'slt': slt_spectrogram,
+
+	#'mel_energy': mel_energy
+	#'bark_energy': bark_energy,
+	#'cqt_energy': cqt_energy,
+	#'erb_energy': erb_energy,
+	#'gammatone_energy': gammatone_energy,
+
+	#'lpc': lpc_features,
+
 	#'mfcc': mfcc,
+	#'bfcc': bfcc,
+	#'gfcc': gfcc,
+
+	#'rms': rms,
+	#'zcr': zcr,
+	#'teo': teo,
+
+	#'psd': psd,
+	#'asd': asd,
+	#'spectral_entropy': spectral_entropy,
+	#'spectral_centroid': spectral_centroid,
+	#'spectral_flux': spectral_flux,
+	'spectral_contrast': spectral_contrast,
 }
 
 features_extractor = FeaturesExtractor(frame_size_ms=40, hop_length_ms=40, features=features, precomputed_dir='../data/precomputed')
@@ -24,4 +49,5 @@ for batch in data_loader:
 	pad = batch['pad']
 
 	for feature_name, feature_data in features.items():
+		exit()
 		pass
