@@ -45,8 +45,17 @@ def fundamental_freq(frame, sample_rate):
 def stft_spectrogram(frame, _):
 	return torchaudio.transforms.Spectrogram()(frame)
 
+def stft_spectrogram_3(frame, _):
+	return torchaudio.transforms.Spectrogram(power=3)(frame)
+
+def stft_spectrogram_6(frame, _):
+	return torchaudio.transforms.Spectrogram(power=6)(frame)
+
 def stft_spectrogram_9(frame, _):
 	return torchaudio.transforms.Spectrogram(power=9)(frame)
+
+def stft_spectrogram_12(frame, _):
+	return torchaudio.transforms.Spectrogram(power=12)(frame)
 
 def cwt_spectrogram(frame, sample_rate):
 	_, result = fcwt.cwt(
