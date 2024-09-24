@@ -10,9 +10,9 @@ features = {
 	'fundamental_freq': fundamental_freq,
 
 	'stft': stft_spectrogram,
-	'stft9': stft_spectrogram_9,
-	'fcwt': cwt_spectrogram,
-	'slt': slt_spectrogram,
+	#'stft9': stft_spectrogram_9,
+	#'fcwt': cwt_spectrogram,
+	#'slt': slt_spectrogram,
 
 	'mel_energy': mel_energy,
 	'bark_energy': bark_energy,
@@ -39,7 +39,7 @@ features = {
 	'spectral_contrast': spectral_contrast,
 }
 
-features_extractor = FeaturesExtractor(frame_size_ms=40, hop_length_ms=40, features=features, precomputed_dir='../data/precomputed')
+features_extractor = FeaturesExtractor(frame_size_ms=40, hop_length_ms=40, features=features, precomputed_dir='../data/precomputed25')
 audio_dataset = AudioDataset(dir='../data/output', features_extractor=features_extractor)
 
 data_loader = DataLoader(audio_dataset, batch_size=1)
@@ -50,5 +50,4 @@ for batch in data_loader:
 	pad = batch['pad']
 
 	for feature_name, feature_data in features.items():
-		exit()
 		pass

@@ -18,6 +18,7 @@ import numpy as np
 
 import os, sys
 
+win_length = 25
 
 class SurpressWarnings:
 	def __enter__(self):
@@ -30,16 +31,26 @@ class SurpressWarnings:
 
 
 def dominant_freq(frame, sample_rate):
-	return torch.tensor(get_dominant_frequencies(frame, fs=sample_rate))
+	dominant_freqs = get_dominant_frequencies(frame, fs=sample_rate, nfft=512)
+
+	if len(dominant_freqs) < 2:
+		dominant_freqs = np.pad(dominant_freqs, (0, 2 - len(dominant_freqs)), mode='constant')
+		
+	return torch.tensor(dominant_freqs)
 
 def fundamental_freq(frame, sample_rate):
 	if np.max(np.abs(frame.numpy())) == 0:
 		return torch.zeros(4)
 
-	pitch, harmonic_rates, argmins, times = compute_yin(frame, fs=sample_rate)
+	win_len = win_length / 1000
+
+	pitch, harmonic_rates, argmins, times = compute_yin(frame, fs=sample_rate, win_len=win_len)
 	result = np.concatenate([pitch, harmonic_rates, argmins, times], axis=None)
 
-	return torch.tensor(result)
+	if result.shape[0] == 4:
+		return torch.tensor(result)
+	else:
+		return torch.zeros(4)
 
 
 def stft_spectrogram(frame, _):
@@ -75,46 +86,59 @@ def slt_spectrogram(frame, sample_rate):
 	return torch.tensor(np.abs(np.stack(result, axis=0)))
 
 
+class FFTCache:
+	"""Cache for storing FFT results for frames."""
+	def __init__(self):
+		self.cache = {}
+
+	def get_fft(self, frame, nfft=512):
+		"""Return the FFT of the frame from cache or compute if not cached."""
+		if isinstance(frame, torch.Tensor):
+			frame = frame.numpy()
+
+		frame_key = frame.tobytes()  # Convert the frame to bytes to use as a dictionary key
+
+		if frame_key not in self.cache:
+			# Compute FFT and store it in the cache
+			frame_fft = np.fft.fft(frame, nfft)[:nfft // 2 + 1]
+			self.cache[frame_key] = frame_fft
+
+		return self.cache[frame_key]
+	
+	def reset(self):
+		"""Clear the cache."""
+		self.cache.clear()
+
+
+# Initialize the global FFT cache
+fft_cache = FFTCache()
+
+# Updated functions using the cache
 def mel_energy(frame, sample_rate):
-	nfft = 512
-	frame_fft = np.fft.fft(frame, nfft)[:nfft // 2 + 1]
-
+	frame_fft = fft_cache.get_fft(frame)
 	mel_fbanks, _ = mel_filter_banks(fs=sample_rate)
-
 	return torch.tensor(np.dot(mel_fbanks, np.abs(frame_fft) ** 2))
 
 def bark_energy(frame, sample_rate):
-	nfft = 512
-	frame_fft = np.fft.fft(frame, nfft)[:nfft // 2 + 1]
-
+	frame_fft = fft_cache.get_fft(frame)
 	bark_fbanks, _ = bark_filter_banks(fs=sample_rate)
-
 	return torch.tensor(np.dot(bark_fbanks, np.abs(frame_fft) ** 2))
 
 def gammatone_energy(frame, sample_rate):
-	nfft = 512
-	frame_fft = np.fft.fft(frame, nfft)[:nfft // 2 + 1]
-
+	frame_fft = fft_cache.get_fft(frame)
 	gammatone_fbanks, _ = gammatone_filter_banks(fs=sample_rate)
-
 	return torch.tensor(np.dot(gammatone_fbanks, np.abs(frame_fft) ** 2))
 
 def cqt_energy(frame, sample_rate):
-	frame = frame.numpy()
-
-	cqt = np.abs(librosa.cqt(frame, sr=sample_rate, n_bins=24, hop_length=160))
-	
+	frame = frame.numpy()  # Convert to numpy array for librosa compatibility
+	cqt = np.abs(librosa.cqt(frame, sr=sample_rate))
 	return torch.tensor(np.sum(cqt ** 2, axis=0))
 
 def erb_energy(frame, sample_rate):
-	nfft = 512
-	frame_fft = np.fft.fft(frame, nfft)[:nfft // 2 + 1]
-	
+	frame_fft = fft_cache.get_fft(frame)
 	erb_bank = EquivalentRectangularBandwidth(len(frame_fft), sample_rate, 40, 20, sample_rate / 2)
-	
 	erb_filters = erb_bank.filters
 	erb_amplitudes = np.dot(np.abs(frame_fft) ** 2, erb_filters)
-	
 	return torch.tensor(erb_amplitudes)
 
 
@@ -125,14 +149,17 @@ def lpc_features(frame, sample_rate):
 	if np.max(np.abs(frame)) == 0:
 		return torch.zeros(order * 2 + 2)
 	
-	lpc_coeffs, lpc_errors = lpc(frame, sample_rate, order=order)
+	try:
+		lpc_coeffs, lpc_errors = lpc(frame, sample_rate, order=order)
 
-	lpc_coeffs = np.array(lpc_coeffs)
-	lpc_errors = np.array([lpc_errors])
+		lpc_coeffs = np.array(lpc_coeffs)
+		lpc_errors = np.array([lpc_errors])
 
-	lpc_result = np.concatenate([lpc_coeffs, lpc_errors], axis=None)
+		lpc_result = np.concatenate([lpc_coeffs, lpc_errors], axis=None)
 
-	return torch.tensor(lpc_result)
+		return torch.tensor(lpc_result)
+	except:
+		return torch.zeros(order * 2 + 2)
 
 
 def mfcc(frame, sample_rate):
@@ -187,7 +214,7 @@ def spectral_entropy(frame, sample_rate):
 	return torch.tensor(spectral_entropy)
 
 def spectral_centroid(frame, sample_rate):
-	return torch.tensor(librosa.feature.spectral_centroid(y=frame.numpy(), sr=sample_rate))
+	return torch.tensor(librosa.feature.spectral_centroid(y=frame.numpy(), sr=sample_rate, n_fft=512))
 
 previous_spectrum = None
 def spectral_flux(frame, _):
@@ -204,4 +231,4 @@ def spectral_flux(frame, _):
 	return torch.tensor(flux)
 
 def spectral_contrast(frame, sample_rate):
-	return torch.tensor(librosa.feature.spectral_contrast(y=frame.numpy(), sr=sample_rate, n_fft=400))
+	return torch.tensor(librosa.feature.spectral_contrast(y=frame.numpy(), sr=sample_rate, n_fft=512))

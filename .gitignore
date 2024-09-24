@@ -166,4 +166,4 @@ data/output/*
 !data/output/.gitkeep
 data/preprocessed
 artefacts/
-precomputed/
+precomputed*

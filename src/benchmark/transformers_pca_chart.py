@@ -80,8 +80,8 @@ def create_bar_chart(data, group_labels, bar_labels):
             )
 
     # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('Percentage (%)')
-    ax.set_title('PCA Results as Percentiles (higher is better)')
+    ax.set_ylabel('Variance (%)')
+    ax.set_title('PCA results (higher is better)')
     ax.set_xticks(x + bar_width * (bars_per_group / 2 - 0.5))
     ax.set_xticklabels(group_labels)
 
