@@ -54,12 +54,14 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model_initialized = False
 feature_sizes = None
 
-num_epochs = 20
+num_epochs = 10
 
 criterion = nn.MSELoss()
 
+from tqdm import tqdm
+
 for epoch in range(num_epochs):
-    for batch in data_loader:
+    for batch in tqdm(data_loader, desc=f'Epoch [{epoch+1}/{num_epochs}]'):
         labels_batch = batch['label']
         features_info = batch['features']
         pad_values = torch.tensor(batch['pad'], dtype=torch.float32).to(device)
@@ -78,9 +80,6 @@ for epoch in range(num_epochs):
             x_feature = vector.view(num_frames, size)
             x_feature = x_feature.unsqueeze(0)  # Dodanie wymiaru batch_size
             feature_tensors.append(x_feature)
-
-        if not feature_tensors:
-            continue  # Pomiń tę próbkę, jeśli nie ma żadnych cech
 
         # Inicjalizacja modelu po pobraniu rozmiarów cech
         if not model_initialized:
@@ -101,4 +100,4 @@ for epoch in range(num_epochs):
         loss.backward()
         optimizer.step()
 
-    print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}")
+    print(f"Loss: {loss.item():.4f}")
